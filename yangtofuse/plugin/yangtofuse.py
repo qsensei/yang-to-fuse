@@ -1,7 +1,10 @@
 from itertools import chain
 import json
+import logging
 
 from pyang import plugin
+
+LOG = logging.getLogger('yang-to-fuse')
 
 
 def pyang_plugin_init():
@@ -49,16 +52,14 @@ def iter_indexes(leaves):
 
 
 def iter_sources(leaves):
+    sources = set()
     for leaf in leaves:
+        sources.add((leaf.arg, get_path(leaf)))
+    for index, attr in sorted(sources):
         yield {
-            'index': leaf.arg,
+            'index': index,
             'type': 'object',
-            'attribute': '$..{}'.format(leaf.arg),
-        }
-        yield {
-            'index': leaf.arg,
-            'type': 'object',
-            'attribute': '$..{}[*]'.format(leaf.arg),
+            'attribute': attr,
         }
 
 
@@ -68,3 +69,15 @@ def iter_parents(s):
     for x in iter_parents(s.parent):
         yield x
     yield s.parent.arg
+
+
+def get_path(leaf):
+    if leaf.keyword == 'leaf':
+        suffix = ''
+    elif leaf.keyword == 'leaf-list':
+        suffix = '[*]'
+    else:
+        raise ValueError('Unknown statement keyword type: {}'.format(
+            leaf.keyword))
+    return '$..{leaf}{suffix}'.format(
+        leaf=leaf.arg, suffix=suffix)
