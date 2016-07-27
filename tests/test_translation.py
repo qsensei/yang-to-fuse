@@ -30,14 +30,10 @@ class TestTranslation(BaseTest):
                 index('my-attr2'),
             ],
             'sources': [
-                source('my-array', '$..my-array'),
                 source('my-array', '$..my-array[*]'),
-                source('my-array2', '$..my-array2'),
                 source('my-array2', '$..my-array2[*]'),
                 source('my-attr', '$..my-attr'),
-                source('my-attr', '$..my-attr[*]'),
                 source('my-attr2', '$..my-attr2'),
-                source('my-attr2', '$..my-attr2[*]'),
             ]
         }
         response = self.run_fut(
