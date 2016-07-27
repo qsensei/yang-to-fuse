@@ -18,5 +18,5 @@ class BaseTest(object):
             cmd.extend(['-p', ':'.join(search_paths)])
         cmd.extend(['-f', 'qsensei-fuse'])
         cmd.extend(models)
-        response = subprocess.check_output(cmd)
+        response = subprocess.check_output(cmd).decode('utf-8')
         return json.loads(response)
