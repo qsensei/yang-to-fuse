@@ -52,11 +52,14 @@ def iter_indexes(leaves):
 
 
 def iter_sources(leaves):
+    sources = set()
     for leaf in leaves:
+        sources.add((leaf.arg, get_path(leaf)))
+    for index, attr in sorted(sources):
         yield {
-            'index': leaf.arg,
+            'index': index,
             'type': 'object',
-            'attribute': get_path(leaf),
+            'attribute': attr,
         }
 
 
