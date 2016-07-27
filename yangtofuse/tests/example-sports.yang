@@ -3,8 +3,6 @@ module example-sports {
   namespace "http://example.com/example-sports";
   prefix sports;
 
-  import ietf-yang-types { prefix yang; }
-
   typedef season {
     type string;
     description
@@ -18,7 +16,7 @@ module example-sports {
     list person {
       key name;
       leaf name { type string; }
-      leaf birthday { type yang:date-and-time; mandatory true; }
+      leaf birthday { type string; mandatory true; }
     }
 
     list team {
