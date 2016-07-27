@@ -9,8 +9,10 @@ setup(
     author='',
     author_email='',
     url='',
-    packages=['yangtofuse', 'yangtofuse.plugin'],
-    package_data={},
+    packages=['yangtofuse', 'yangtofuse.plugin', 'yangtofuse.tests'],
+    package_data={
+        'yangtofuse.tests': ['*.yang'],
+    },
     include_package_data=True,
     zip_safe=False,
     install_requires=[

@@ -1,7 +1,16 @@
 language: python
+services:
+  - docker
 python:
   - '2.7'
   - '3.3'
   - pypy
-install: "pip install -r requirements.txt"
-script: nosetests
+install:
+  - docker login -u "$DOCKER_USER" -p "$DOCKER_PASSWORD" -e "$DOCKER_EMAIL" docker.qsensei.com
+  - "pip install -r requirements.txt"
+  - inv build
+script:
+  - nosetests
+  - inv test_image
+after_success:
+  - [ "$TRAVIS_BRANCH" == "master" ] && inv push
