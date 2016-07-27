@@ -17,7 +17,9 @@ class YangToFuse(plugin.PyangPlugin):
         leaves = list(chain(*(iter_leaves(x) for x in modules)))
         indexschema = {
             'indexes': list(iter_indexes(leaves)),
-            'sources': list(iter_sources(leaves)),
+            'sources': sorted(
+                iter_sources(leaves),
+                key=lambda x: (x['index'], x['attribute'])),
         }
         fd.write(json.dumps(indexschema, indent=2))
 

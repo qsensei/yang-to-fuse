@@ -1,0 +1,23 @@
+module simple {
+    namespace "my:namespace";
+    prefix "simple";
+
+    container my-container {
+        leaf my-attr {
+            type string;
+        }
+        leaf-list my-array {
+            type string;
+        }
+        container my-sub-container {
+          leaf my-attr2 {
+            type string;
+          }
+          leaf-list my-array2 {
+            type string;
+          }
+        }
+    }
+
+
+}
