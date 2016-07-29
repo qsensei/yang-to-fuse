@@ -13,7 +13,7 @@ def index(name):
 def source(index, jsonpath):
     return {
         'index': index,
-        'type': 'object',
+        'fuse:type': 'object',
         'attribute': jsonpath,
     }
 
@@ -23,17 +23,22 @@ class TestTranslation(BaseTest):
         search_paths = []
         models = [os.path.join(here, 'simple.yang')]
         expected = {
+            'defaults': {
+                'limit': 5,
+                'fulltext_index': 'tx',
+            },
             'indexes': [
-                index('my-array'),
-                index('my-array2'),
-                index('my-attr'),
-                index('my-attr2'),
+                {'name': 'tx', 'type': 'text'},
+                index('my_array'),
+                index('my_array2'),
+                index('my_attr'),
+                index('my_attr2'),
             ],
             'sources': [
-                source('my-array', '$..my-array[*]'),
-                source('my-array2', '$..my-array2[*]'),
-                source('my-attr', '$..my-attr'),
-                source('my-attr2', '$..my-attr2'),
+                source('my_array', '$..my-array[*]'),
+                source('my_array2', '$..my-array2[*]'),
+                source('my_attr', '$..my-attr'),
+                source('my_attr2', '$..my-attr2'),
             ]
         }
         response = self.run_fut(
@@ -44,7 +49,12 @@ class TestTranslation(BaseTest):
         search_paths = []
         models = [os.path.join(here, 'example-sports.yang')]
         expected = {
+            'defaults': {
+                'limit': 5,
+                'fulltext_index': 'tx',
+            },
             'indexes': [
+                {'name': 'tx', 'type': 'text'},
                 index('birthday'),
                 index('name'),
                 index('number'),

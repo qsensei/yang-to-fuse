@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from itertools import chain
 import json
 import logging
@@ -18,18 +19,22 @@ class YangToFuse(plugin.PyangPlugin):
 
     def emit(self, ctx, modules, fd):
         leaves = list(chain(*(iter_leaves(x) for x in modules)))
-        indexschema = {
-            'indexes': list(iter_indexes(leaves)),
-            'sources': sorted(
-                iter_sources(leaves),
-                key=lambda x: (x['index'], x['attribute'])),
-        }
+        indexschema = OrderedDict()
+        indexschema['defaults'] = {'fulltext_index': 'tx', 'limit': 5}
+        indexschema['indexes'] = [
+            {'name': 'tx', 'type': 'text'}] + list(iter_indexes(leaves))
+        indexschema['sources'] = sorted(
+            iter_sources(leaves), key=lambda x: (x['index'], x['attribute']))
         fd.write(json.dumps(indexschema, indent=2))
 
     def add_opts(self, optparser):
         optlist = []
         g = optparser.add_option_group("qsensei-fuse output specific options")
         g.add_options(optlist)
+
+
+def as_index(x):
+    return x.replace('-', '_')
 
 
 def iter_leaves(s):
@@ -47,7 +52,7 @@ def iter_indexes(leaves):
     indexes = {x.arg for x in leaves}
     for index_name in sorted(indexes):
         yield {
-            'name': index_name
+            'name': as_index(index_name)
         }
 
 
@@ -57,8 +62,8 @@ def iter_sources(leaves):
         sources.add((leaf.arg, get_path(leaf)))
     for index, attr in sorted(sources):
         yield {
-            'index': index,
-            'type': 'object',
+            'index': as_index(index),
+            'fuse:type': 'object',
             'attribute': attr,
         }
 
