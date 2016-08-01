@@ -29,8 +29,8 @@ environments without installing directly to system paths.
   which python
   # /home/ubuntu/env/bin/python
 
-*Note: When you're done with your virtualenv, run deactivate to deactivate *
-*the virtual python environment from your shell session.*
+*Note: When you're done with your virtualenv, run deactivate to deactivate
+the virtual python environment from your shell session.*
 
 First, install source code. For the editable development version, run the
 following. This will also install the pyang_ script as well.
