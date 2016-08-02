@@ -2,12 +2,24 @@ module simple {
     namespace "my:namespace";
     prefix "simple";
 
+    grouping my-grouping {
+        leaf-list my-grouping-leaf-list {
+            type string;
+        }
+        leaf my-grouping-leaf {
+           type string;
+        }
+    }
+
     container my-container {
         leaf my-attr {
             type string;
         }
         leaf-list my-array {
             type string;
+        }
+        container my-grouping-leaf {
+          uses my-grouping;
         }
         container my-sub-container {
           leaf my-attr2 {

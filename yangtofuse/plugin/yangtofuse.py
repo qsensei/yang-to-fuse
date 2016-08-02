@@ -38,12 +38,16 @@ def as_index(x):
 
 
 def iter_leaves(s):
-    try:
-        children = s.i_children
-    except AttributeError:
-        yield s
-    else:
-        for child in children:
+    children = s.substmts
+    children = filter(
+        lambda x: x.keyword in (
+            'grouping', 'container', 'leaf', 'leaf-list', 'list'),
+        children
+    )
+    for child in children:
+        if child.keyword == 'leaf' or child.keyword == 'leaf-list':
+            yield child
+        else:
             for leaf in iter_leaves(child):
                 yield leaf
 

@@ -33,12 +33,16 @@ class TestTranslation(BaseTest):
                 index('my_array2'),
                 index('my_attr'),
                 index('my_attr2'),
+                index('my_grouping_leaf'),
+                index('my_grouping_leaf_list'),
             ],
             'sources': [
                 source('my_array', '$..my-array[*]'),
                 source('my_array2', '$..my-array2[*]'),
                 source('my_attr', '$..my-attr'),
                 source('my_attr2', '$..my-attr2'),
+                source('my_grouping_leaf', '$..my-grouping-leaf'),
+                source('my_grouping_leaf_list', '$..my-grouping-leaf-list[*]'),
             ]
         }
         response = self.run_fut(
