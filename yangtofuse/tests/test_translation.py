@@ -50,7 +50,7 @@ class TestTranslation(BaseTest):
             ]
         }
         response = self.run_fut(
-            search_paths=search_paths, models=models)
+            search_paths=search_paths, models=models, max_depth=1)
         assert expected == response
 
     def test_example_sports(self):
@@ -78,5 +78,5 @@ class TestTranslation(BaseTest):
             ]
         }
         response = self.run_fut(
-            search_paths=search_paths, models=models)
+            search_paths=search_paths, models=models, max_depth=1)
         assert expected == response

@@ -1,7 +1,9 @@
 from collections import OrderedDict
 from collections import namedtuple
+from itertools import islice
 import json
 import logging
+import optparse
 
 from pyang import plugin
 
@@ -21,14 +23,16 @@ class YangToFuse(plugin.PyangPlugin):
         fmts['qsensei-fuse'] = self
 
     def emit(self, ctx, modules, fd):
+        max_depth = ctx.opts.max_depth
+
         indexes = set()
         sources = set()
 
         for module in modules:
             leaves = list(iter_leaves(module))
-            for index in iter_indexes(leaves):
+            for index in iter_indexes(leaves, max_depth=max_depth):
                 indexes.add(index)
-            for source in iter_sources(leaves):
+            for source in iter_sources(leaves, max_depth=max_depth):
                 sources.add(source)
 
         indexes = sorted(indexes)
@@ -49,13 +53,34 @@ class YangToFuse(plugin.PyangPlugin):
         fd.write(json.dumps(indexschema, indent=2))
 
     def add_opts(self, optparser):
-        optlist = []
+        optlist = [
+            optparse.make_option(
+                '--max-depth',
+                default=None,
+                dest='max_depth',
+                type=int,
+                help='''Depth (e.g. 3) to use when creating indexes.
+                Complete path is default.
+                '''
+            ),
+        ]
         g = optparser.add_option_group("qsensei-fuse output specific options")
         g.add_options(optlist)
 
 
-def as_index(x):
-    return x.replace('-', '_')
+def iter_hierarchy(x):
+    yield x
+    while x.parent:
+        yield x.parent
+        x = x.parent
+
+
+def as_index(x, max_depth):
+    """ Convert node into a Fuse index.
+    """
+    hierarchy = list(islice(iter_hierarchy(x), 0, max_depth))
+    hierarchy.reverse()
+    return '_'.join(x.arg for x in hierarchy).replace('-', '_')
 
 
 def iter_leaves(s):
@@ -76,32 +101,34 @@ def iter_leaves(s):
             yield child
 
 
-def iter_indexes(leaves):
+def iter_indexes(leaves, max_depth):
     for leaf in leaves:
-        yield Index(as_index(leaf.arg))
+        yield Index(as_index(leaf, max_depth))
 
 
-def iter_sources(leaves):
+def iter_sources(leaves, max_depth):
     for leaf in leaves:
         yield Source(
-            index=as_index(leaf.arg), type='object', attribute=get_path(leaf))
+            index=as_index(leaf, max_depth),
+            type='object',
+            attribute=get_path(leaf, max_depth),
+        )
 
 
-def iter_parents(s):
-    if s.parent is None:
-        return
-    for x in iter_parents(s.parent):
-        yield x
-    yield s.parent.arg
-
-
-def get_path(leaf):
-    if leaf.keyword == 'leaf':
-        suffix = ''
-    elif leaf.keyword == 'leaf-list':
-        suffix = '[*]'
-    else:
+def get_path(leaf, max_depth):
+    if leaf.keyword not in ('leaf', 'leaf-list'):
         raise ValueError('Unknown statement keyword type: {}'.format(
             leaf.keyword))
-    return '$..{leaf}{suffix}'.format(
-        leaf=leaf.arg, suffix=suffix)
+
+    hierarchy = list(islice(iter_hierarchy(leaf), 0, max_depth))
+    hierarchy.reverse()
+
+    def iter_elements():
+        yield '$.'
+        for node in hierarchy:
+            if node.keyword in ('list', 'leaf-list'):
+                yield '.{}[*]'.format(node.arg)
+            else:
+                yield '.{}'.format(node.arg)
+
+    return ''.join(iter_elements())
