@@ -1,6 +1,5 @@
 from collections import OrderedDict
 from collections import namedtuple
-from itertools import chain
 import json
 import logging
 
@@ -22,13 +21,21 @@ class YangToFuse(plugin.PyangPlugin):
         fmts['qsensei-fuse'] = self
 
     def emit(self, ctx, modules, fd):
-        leaves = list(chain(*(iter_leaves(x) for x in modules)))
+        indexes = set()
+        sources = set()
 
-        indexes = sorted(set(iter_indexes(leaves)))
-        indexes = [x._asdict() for x in indexes]
+        for module in modules:
+            leaves = list(iter_leaves(module))
+            for index in iter_indexes(leaves):
+                indexes.add(index)
+            for source in iter_sources(leaves):
+                sources.add(source)
+
+        indexes = sorted(indexes)
+        indexes = [{'name': x.name} for x in indexes]
         indexes = [{'name': 'tx', 'type': 'text'}] + indexes
 
-        sources = sorted(set(iter_sources(leaves)))
+        sources = sorted(sources)
         sources = [{
             'index': x.index,
             'fuse:type': x.type,
