@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from collections import namedtuple
 from itertools import chain
 import json
 import logging
@@ -6,6 +7,9 @@ import logging
 from pyang import plugin
 
 LOG = logging.getLogger('yang-to-fuse')
+
+Index = namedtuple('Index', ['name'])
+Source = namedtuple('Index', ['index', 'type', 'attribute'])
 
 
 def pyang_plugin_init():
@@ -19,12 +23,22 @@ class YangToFuse(plugin.PyangPlugin):
 
     def emit(self, ctx, modules, fd):
         leaves = list(chain(*(iter_leaves(x) for x in modules)))
+
+        indexes = sorted(set(iter_indexes(leaves)))
+        indexes = [x._asdict() for x in indexes]
+        indexes = [{'name': 'tx', 'type': 'text'}] + indexes
+
+        sources = sorted(set(iter_sources(leaves)))
+        sources = [{
+            'index': x.index,
+            'fuse:type': x.type,
+            'attribute': x.attribute,
+        } for x in sources]
+
         indexschema = OrderedDict()
         indexschema['defaults'] = {'fulltext_index': 'tx', 'limit': 5}
-        indexschema['indexes'] = [
-            {'name': 'tx', 'type': 'text'}] + list(iter_indexes(leaves))
-        indexschema['sources'] = sorted(
-            iter_sources(leaves), key=lambda x: (x['index'], x['attribute']))
+        indexschema['indexes'] = indexes
+        indexschema['sources'] = sources
         fd.write(json.dumps(indexschema, indent=2))
 
     def add_opts(self, optparser):
@@ -53,23 +67,14 @@ def iter_leaves(s):
 
 
 def iter_indexes(leaves):
-    indexes = {x.arg for x in leaves}
-    for index_name in sorted(indexes):
-        yield {
-            'name': as_index(index_name)
-        }
+    for leaf in leaves:
+        yield Index(as_index(leaf.arg))
 
 
 def iter_sources(leaves):
-    sources = set()
     for leaf in leaves:
-        sources.add((leaf.arg, get_path(leaf)))
-    for index, attr in sorted(sources):
-        yield {
-            'index': as_index(index),
-            'fuse:type': 'object',
-            'attribute': attr,
-        }
+        yield Source(
+            index=as_index(leaf.arg), type='object', attribute=get_path(leaf))
 
 
 def iter_parents(s):
