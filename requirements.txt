@@ -1,3 +1,2 @@
 -e file:.#egg=yang-to-fuse
-invoke==0.13.0
 pyang==1.7

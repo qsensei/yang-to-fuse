@@ -1,9 +1,0 @@
-Dockerfile
-README.rst
-env
-requirements.txt
-setup.py
-tests
-yang_to_fuse.egg-info
-yangtofuse
-build
