@@ -3,11 +3,17 @@ module example-sports {
   namespace "http://example.com/example-sports";
   prefix sports;
 
+  import example-stadium { prefix s; }
+
   typedef season {
     type string;
     description
       "The name of a sports season, including the type and the year, e.g,
        'Champions League 2014/2015'.";
+  }
+
+  grouping person-grouping {
+      leaf birthday { type string; mandatory true; }
   }
 
   container sports {
@@ -16,7 +22,7 @@ module example-sports {
     list person {
       key name;
       leaf name { type string; }
-      leaf birthday { type string; mandatory true; }
+      uses person-grouping;
     }
 
     list team {
@@ -31,5 +37,9 @@ module example-sports {
         leaf scores { type uint16; default 0; }
       }
     }
+  }
+
+  augment "/s:stadium" {
+    leaf occupancy { type uint32; }
   }
 }

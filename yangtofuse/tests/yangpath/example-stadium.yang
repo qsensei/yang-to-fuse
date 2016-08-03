@@ -1,0 +1,18 @@
+module example-stadium {
+  namespace "http://example.com/stadium";
+  prefix "e";
+
+  container stadium {
+    container location {
+      leaf state {
+        type string;
+      }
+      leaf city {
+        type string;
+      }
+      leaf population {
+        type uint64;
+      }
+    }
+  }
+}

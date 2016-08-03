@@ -70,7 +70,7 @@ class YangToFuse(plugin.PyangPlugin):
 
 def iter_hierarchy(x):
     yield x
-    while x.parent:
+    while x.parent and x.parent.keyword != 'module':
         yield x.parent
         x = x.parent
 
@@ -84,21 +84,13 @@ def as_index(x, max_depth):
 
 
 def iter_leaves(s):
-    # yield augment targets
-    for child in s.search('augment'):
-        for sub_child in iter_leaves(child.i_target_node):
-            sub_child = sub_child.copy()
-            sub_child.parent = child
-            yield sub_child
     # yield leaves of children
-    for keyword in ('augment', 'grouping', 'container', 'list'):
-        for child in s.search(keyword):
+    for child in s.i_children:
+        if child.keyword in ('leaf', 'leaf-list'):
+            yield child
+        else:
             for leaf in iter_leaves(child):
                 yield leaf
-    # yield leaves
-    for keyword in ('leaf', 'leaf-list'):
-        for child in s.search(keyword):
-            yield child
 
 
 def iter_indexes(leaves, max_depth):
