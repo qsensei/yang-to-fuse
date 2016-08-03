@@ -1,11 +1,14 @@
 from collections import OrderedDict
-from itertools import chain
+from collections import namedtuple
 import json
 import logging
 
 from pyang import plugin
 
 LOG = logging.getLogger('yang-to-fuse')
+
+Index = namedtuple('Index', ['name'])
+Source = namedtuple('Index', ['index', 'type', 'attribute'])
 
 
 def pyang_plugin_init():
@@ -18,13 +21,31 @@ class YangToFuse(plugin.PyangPlugin):
         fmts['qsensei-fuse'] = self
 
     def emit(self, ctx, modules, fd):
-        leaves = list(chain(*(iter_leaves(x) for x in modules)))
+        indexes = set()
+        sources = set()
+
+        for module in modules:
+            leaves = list(iter_leaves(module))
+            for index in iter_indexes(leaves):
+                indexes.add(index)
+            for source in iter_sources(leaves):
+                sources.add(source)
+
+        indexes = sorted(indexes)
+        indexes = [{'name': x.name} for x in indexes]
+        indexes = [{'name': 'tx', 'type': 'text'}] + indexes
+
+        sources = sorted(sources)
+        sources = [{
+            'index': x.index,
+            'fuse:type': x.type,
+            'attribute': x.attribute,
+        } for x in sources]
+
         indexschema = OrderedDict()
         indexschema['defaults'] = {'fulltext_index': 'tx', 'limit': 5}
-        indexschema['indexes'] = [
-            {'name': 'tx', 'type': 'text'}] + list(iter_indexes(leaves))
-        indexschema['sources'] = sorted(
-            iter_sources(leaves), key=lambda x: (x['index'], x['attribute']))
+        indexschema['indexes'] = indexes
+        indexschema['sources'] = sources
         fd.write(json.dumps(indexschema, indent=2))
 
     def add_opts(self, optparser):
@@ -38,38 +59,32 @@ def as_index(x):
 
 
 def iter_leaves(s):
-    children = s.substmts
-    children = filter(
-        lambda x: x.keyword in (
-            'grouping', 'container', 'leaf', 'leaf-list', 'list'),
-        children
-    )
-    for child in children:
-        if child.keyword == 'leaf' or child.keyword == 'leaf-list':
-            yield child
-        else:
+    # yield augment targets
+    for child in s.search('augment'):
+        for sub_child in iter_leaves(child.i_target_node):
+            sub_child = sub_child.copy()
+            sub_child.parent = child
+            yield sub_child
+    # yield leaves of children
+    for keyword in ('augment', 'grouping', 'container', 'list'):
+        for child in s.search(keyword):
             for leaf in iter_leaves(child):
                 yield leaf
+    # yield leaves
+    for keyword in ('leaf', 'leaf-list'):
+        for child in s.search(keyword):
+            yield child
 
 
 def iter_indexes(leaves):
-    indexes = {x.arg for x in leaves}
-    for index_name in sorted(indexes):
-        yield {
-            'name': as_index(index_name)
-        }
+    for leaf in leaves:
+        yield Index(as_index(leaf.arg))
 
 
 def iter_sources(leaves):
-    sources = set()
     for leaf in leaves:
-        sources.add((leaf.arg, get_path(leaf)))
-    for index, attr in sorted(sources):
-        yield {
-            'index': as_index(index),
-            'fuse:type': 'object',
-            'attribute': attr,
-        }
+        yield Source(
+            index=as_index(leaf.arg), type='object', attribute=get_path(leaf))
 
 
 def iter_parents(s):

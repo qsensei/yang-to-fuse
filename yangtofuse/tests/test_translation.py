@@ -20,7 +20,7 @@ def source(index, jsonpath):
 
 class TestTranslation(BaseTest):
     def test_simple(self):
-        search_paths = []
+        search_paths = [os.path.join(here, 'yangpath')]
         models = [os.path.join(here, 'simple.yang')]
         expected = {
             'defaults': {
@@ -29,18 +29,22 @@ class TestTranslation(BaseTest):
             },
             'indexes': [
                 {'name': 'tx', 'type': 'text'},
+                index('b_leaf'),
                 index('my_array'),
                 index('my_array2'),
                 index('my_attr'),
                 index('my_attr2'),
+                index('my_augmented_leaf'),
                 index('my_grouping_leaf'),
                 index('my_grouping_leaf_list'),
             ],
             'sources': [
+                source('b_leaf', '$..b-leaf'),
                 source('my_array', '$..my-array[*]'),
                 source('my_array2', '$..my-array2[*]'),
                 source('my_attr', '$..my-attr'),
                 source('my_attr2', '$..my-attr2'),
+                source('my_augmented_leaf', '$..my-augmented-leaf'),
                 source('my_grouping_leaf', '$..my-grouping-leaf'),
                 source('my_grouping_leaf_list', '$..my-grouping-leaf-list[*]'),
             ]

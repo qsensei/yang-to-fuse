@@ -2,6 +2,8 @@ module simple {
     namespace "my:namespace";
     prefix "simple";
 
+    import b { prefix b; }
+
     grouping my-grouping {
         leaf-list my-grouping-leaf-list {
             type string;
@@ -31,5 +33,9 @@ module simple {
         }
     }
 
-
+  augment "/b:b-container/b:b-list" {
+    leaf my-augmented-leaf {
+      type string;
+    }
+  }
 }
