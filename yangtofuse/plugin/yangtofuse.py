@@ -59,18 +59,21 @@ def as_index(x):
 
 
 def iter_leaves(s):
-    children = s.substmts
-    children = filter(
-        lambda x: x.keyword in (
-            'grouping', 'container', 'leaf', 'leaf-list', 'list'),
-        children
-    )
-    for child in children:
-        if child.keyword == 'leaf' or child.keyword == 'leaf-list':
-            yield child
-        else:
+    # yield augment targets
+    for child in s.search('augment'):
+        for sub_child in iter_leaves(child.i_target_node):
+            sub_child = sub_child.copy()
+            sub_child.parent = child
+            yield sub_child
+    # yield leaves of children
+    for keyword in ('augment', 'grouping', 'container', 'list'):
+        for child in s.search(keyword):
             for leaf in iter_leaves(child):
                 yield leaf
+    # yield leaves
+    for keyword in ('leaf', 'leaf-list'):
+        for child in s.search(keyword):
+            yield child
 
 
 def iter_indexes(leaves):
