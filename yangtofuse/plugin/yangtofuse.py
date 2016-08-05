@@ -118,9 +118,32 @@ def get_path(leaf, max_depth):
     def iter_elements():
         yield '$.'
         for node in hierarchy:
+            arg = get_node_name(node)
             if node.keyword in ('list', 'leaf-list'):
-                yield '.{}[*]'.format(node.arg)
+                yield '.{}[*]'.format(arg)
             else:
-                yield '.{}'.format(node.arg)
+                yield '.{}'.format(arg)
 
     return ''.join(iter_elements())
+
+
+def get_node_name(node):
+    """ Get the name of the node.
+
+    augments
+    ========
+
+    If the target of an augment statement AND ext:augment-identifier is
+    defined, prefix the statement with the augmentation identifier.
+
+    """
+    arg = node.arg
+    try:
+        augment = node.i_augment
+    except AttributeError:
+        pass
+    else:
+        aug_id = augment.search_one(('yang-ext', 'augment-identifier'))
+        if aug_id:
+            arg = '{}:{}'.format(aug_id.arg, arg)
+    return arg

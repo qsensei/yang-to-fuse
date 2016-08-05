@@ -4,6 +4,7 @@ module example-sports {
   prefix sports;
 
   import example-stadium { prefix s; }
+  import yang-ext { prefix ext; revision-date "2013-07-09";}
 
   typedef season {
     type string;
@@ -41,5 +42,9 @@ module example-sports {
 
   augment "/s:stadium" {
     leaf occupancy { type uint32; }
+  }
+  augment "/s:stadium/s:location" {
+    ext:augment-identifier "sports-augment";
+    leaf gdp { type uint32; }
   }
 }
