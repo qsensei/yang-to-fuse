@@ -231,7 +231,7 @@ class TestExampleTranslation(BaseTest):
                        '$..stadium.sports:occupancy'),
             ]
         }
-        for n in xrange(4, 10):
+        for n in range(4, 10):
             response = self.run_fut(
                 search_paths=self.search_paths,
                 models=self.models,
