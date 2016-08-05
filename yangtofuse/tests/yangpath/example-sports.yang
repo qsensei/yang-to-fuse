@@ -46,5 +46,11 @@ module example-sports {
   augment "/s:stadium/s:location" {
     ext:augment-identifier "sports-augment";
     leaf gdp { type uint32; }
+
+    container politics {
+      leaf-list parties {
+        type string;
+      }
+    }
   }
 }

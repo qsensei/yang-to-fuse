@@ -41,6 +41,7 @@ class TestExampleTranslation(BaseTest):
                 index('name'),
                 index('number'),
                 index('occupancy'),
+                index('parties'),
                 index('population'),
                 index('scores'),
                 index('season'),
@@ -53,6 +54,7 @@ class TestExampleTranslation(BaseTest):
                 source('name', '$..name'),
                 source('number', '$..number'),
                 source('occupancy', '$..occupancy'),
+                source('parties', '$..parties[*]'),
                 source('population', '$..population'),
                 source('scores', '$..scores'),
                 source('season', '$..season'),
@@ -84,6 +86,7 @@ class TestExampleTranslation(BaseTest):
                 index('player_number'),
                 index('player_scores'),
                 index('player_season'),
+                index('politics_parties'),
                 index('stadium_occupancy'),
                 index('team_name'),
             ],
@@ -98,6 +101,8 @@ class TestExampleTranslation(BaseTest):
                 source('player_number', '$..player[*].number'),
                 source('player_scores', '$..player[*].scores'),
                 source('player_season', '$..player[*].season'),
+                source('politics_parties',
+                       '$..sports-augment:politics.parties[*]'),
                 source('stadium_occupancy', '$..stadium.occupancy'),
                 source('team_name', '$..team[*].name'),
             ]
@@ -122,6 +127,7 @@ class TestExampleTranslation(BaseTest):
             },
             'indexes': [
                 {'name': 'tx', 'type': 'text'},
+                index('location_politics_parties'),
                 index('sports_person_birthday'),
                 index('sports_person_name'),
                 index('sports_team_name'),
@@ -136,6 +142,9 @@ class TestExampleTranslation(BaseTest):
                 index('team_player_season'),
             ],
             'sources': [
+                source(
+                    'location_politics_parties',
+                    '$..location.sports-augment:politics.parties[*]'),
                 source(sp + 'birthday', '$..sports.person[*].birthday'),
                 source(sp + 'name', '$..sports.person[*].name'),
                 source(st + 'name', '$..sports.team[*].name'),
@@ -179,6 +188,7 @@ class TestExampleTranslation(BaseTest):
                 index('sports_team_player_season'),
                 index('stadium_location_city'),
                 index('stadium_location_gdp'),
+                index('stadium_location_politics_parties'),
                 index('stadium_location_population'),
                 index('stadium_location_state'),
                 index('stadium_occupancy'),
@@ -193,6 +203,8 @@ class TestExampleTranslation(BaseTest):
                 source(tp + 'season', '$..sports.team[*].player[*].season'),
                 source(sl + 'city', '$..stadium.location.city'),
                 source(sl + 'gdp', '$..stadium.location.sports-augment:gdp'),
+                source(sl + 'politics_parties', '$..stadium.location' +
+                       '.sports-augment:politics.parties[*]'),
                 source(sl + 'population', '$..stadium.location.population'),
                 source(sl + 'state', '$..stadium.location.state'),
                 source(sa + 'occupancy', '$..stadium.occupancy'),
