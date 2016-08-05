@@ -231,12 +231,13 @@ class TestExampleTranslation(BaseTest):
                        '$..stadium.sports:occupancy'),
             ]
         }
-        response = self.run_fut(
-            search_paths=self.search_paths,
-            models=self.models,
-            max_depth=4,
-        )
-        assert expected == response
+        for n in xrange(4, 10):
+            response = self.run_fut(
+                search_paths=self.search_paths,
+                models=self.models,
+                max_depth=n,
+            )
+            assert expected == response
         response = self.run_fut(
             search_paths=self.search_paths,
             models=self.models,
