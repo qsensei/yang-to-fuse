@@ -100,34 +100,45 @@ def iter_indexes(leaves, max_depth):
 
 def iter_sources(leaves, max_depth):
     for leaf in leaves:
-        yield Source(
-            index=as_index(leaf, max_depth),
-            type='object',
-            attribute=get_path(leaf, max_depth),
-        )
+        for path in get_paths(leaf, max_depth):
+            yield Source(
+                index=as_index(leaf, max_depth),
+                type='object',
+                attribute=path,
+            )
 
 
-def get_path(leaf, max_depth):
+def get_paths(leaf, max_depth):
     if leaf.keyword not in ('leaf', 'leaf-list'):
         raise ValueError('Unknown statement keyword type: {}'.format(
             leaf.keyword))
-
     hierarchy = list(islice(iter_hierarchy(leaf), 0, max_depth))
     hierarchy.reverse()
-
-    def iter_elements():
-        yield '$.'
-        for node in hierarchy:
-            arg = get_node_name(node)
-            if node.keyword in ('list', 'leaf-list'):
-                yield '.{}[*]'.format(arg)
-            else:
-                yield '.{}'.format(arg)
-
-    return ''.join(iter_elements())
+    return list(iter_paths(hierarchy))
 
 
-def get_node_name(node):
+def iter_paths(hierarchy, stack=None):
+    """ Iterate through all json pathes for hierarchy.
+
+    Since augmented nodes may have many representations, this may generate more
+    than one path for a hierarchy.
+    """
+    if stack is None:
+        stack = ['$.']
+
+    node = hierarchy[0]
+    for name in get_node_names(node):
+        if len(hierarchy) == 1:
+            yield ''.join(stack + [name])
+        else:
+            stack.append(name)
+            child_paths = iter_paths(hierarchy[1:], stack=[])
+            for child_path in child_paths:
+                yield ''.join(stack + [child_path])
+            stack.pop(-1)
+
+
+def get_node_names(node):
     """ Get the name of the node.
 
     augments
@@ -137,13 +148,27 @@ def get_node_name(node):
     defined, prefix the statement with the augmentation identifier.
 
     """
-    arg = node.arg
+    suffix = ''
+    if node.keyword in ('list', 'leaf-list'):
+        suffix = '[*]'
     try:
         augment = node.i_augment
     except AttributeError:
         pass
     else:
-        aug_id = augment.search_one(('yang-ext', 'augment-identifier'))
-        if aug_id:
-            arg = '{}:{}'.format(aug_id.arg, arg)
-    return arg
+        prefixes = iter_augment_prefixes(augment)
+        return ['.{}:{}{}'.format(x, node.arg, suffix) for x in prefixes]
+    return ['.{}{}'.format(node.arg, suffix)]
+
+
+def iter_augment_prefixes(node):
+    """ Iterate prefixes for this augment.
+
+    If yang-ext:augment-identifier is defined, use that. Else, use look for
+    both the module name and the module prefix.
+    """
+    module = node.top
+    yield module.arg
+    prefix = module.search_one('prefix')
+    if prefix:
+        yield prefix.arg
